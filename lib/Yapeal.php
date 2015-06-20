@@ -82,6 +82,7 @@ class Yapeal implements WiringInterface
         $csq = $dic['Yapeal.Database.CommonQueries'];
         $sql = $csq->getActiveApis();
         $logger->info($sql);
+        $yed = $dic['Yapeal.Event.Dispatcher'];
         try {
             /**
              * @type PDO $pdo

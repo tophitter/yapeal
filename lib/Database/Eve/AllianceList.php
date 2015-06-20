@@ -8,7 +8,7 @@
  * This file is part of Yet Another Php Eve Api Library also know as Yapeal
  * which can be used to access the Eve Online API data and place it into a
  * database.
- * Copyright (C) 2014 Michael Cummings
+ * Copyright (C) 2014-2015 Michael Cummings
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -27,7 +27,7 @@
  * You should be able to find a copy of this license in the LICENSE.md file. A
  * copy of the GNU GPL should also be available in the GNU-GPL.md file.
  *
- * @copyright 2014 Michael Cummings
+ * @copyright 2014-2015 Michael Cummings
  * @license   http://www.gnu.org/copyleft/lesser.html GNU LGPL
  * @author    Michael Cummings <mgcummings@yahoo.com>
  */
@@ -116,9 +116,9 @@ class AllianceList extends AbstractCommonEveApi
     protected function addMembers(SimpleXMLIterator $parent, $allianceID)
     {
         $this->columnDefaults = [
-            'allianceID' => $allianceID,
+            'allianceID'    => $allianceID,
             'corporationID' => null,
-            'startDate' => null
+            'startDate'     => null
         ];
         $tableName = 'eveMemberCorporations';
         /**
@@ -128,7 +128,7 @@ class AllianceList extends AbstractCommonEveApi
         foreach ($kids as $row) {
             // Replace empty values with any existing defaults.
             foreach ($this->columnDefaults as $key => $value) {
-                if (is_null($value) || strlen($row[$key]) != 0) {
+                if (null === $value || '' === $row[$key]) {
                     $this->columns[] = (string)$row[$key];
                     continue;
                 }
@@ -184,18 +184,18 @@ class AllianceList extends AbstractCommonEveApi
     protected function preserveToAllianceList($xml)
     {
         $columnDefaults = [
-            'name' => null,
-            'shortName' => null,
-            'allianceID' => null,
+            'name'           => null,
+            'shortName'      => null,
+            'allianceID'     => null,
             'executorCorpID' => null,
-            'memberCount' => null,
-            'startDate' => null
+            'memberCount'    => null,
+            'startDate'      => null
         ];
         $membersName = 'eveMemberCorporations';
         $tableName = 'eveAllianceList';
         $xPath = '//row[@allianceID]';
         $rows = (new SimpleXMLIterator($xml))->xpath($xPath);
-        if (count($rows) == 0) {
+        if (0 === count($rows)) {
             return $this;
         }
         $sql = $this->getCsq()
@@ -219,7 +219,7 @@ class AllianceList extends AbstractCommonEveApi
          */
         foreach ($rows as $row) {
             foreach ($columnDefaults as $key => $value) {
-                if ($key == 'allianceID') {
+                if ('allianceID' === $key) {
                     $this->addMembers($row, (string)$row[$key]);
                 }
                 $columns[] = (string)$row[$key];
@@ -250,7 +250,7 @@ class AllianceList extends AbstractCommonEveApi
         return $this;
     }
     /**
-     * @type string[] $columnDefaults
+     * @type array $columnDefaults
      */
     protected $columnDefaults;
     /**

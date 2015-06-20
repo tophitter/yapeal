@@ -8,7 +8,7 @@
  * This file is part of Yet Another Php Eve Api Library also know as Yapeal
  * which can be used to access the Eve Online API data and place it into a
  * database.
- * Copyright (C) 2014 Michael Cummings
+ * Copyright (C) 2014-2015 Michael Cummings
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -27,7 +27,7 @@
  * You should be able to find a copy of this license in the LICENSE.md file. A
  * copy of the GNU GPL should also be available in the GNU-GPL.md file.
  *
- * @copyright 2014 Michael Cummings
+ * @copyright 2014-2015 Michael Cummings
  * @license   http://www.gnu.org/copyleft/lesser.html GNU LGPL
  * @author    Michael Cummings <mgcummings@yahoo.com>
  */
@@ -53,9 +53,13 @@ class AssetList extends AbstractCorpSection
      */
     protected function addNesting(SimpleXMLElement $row, $idx = 0)
     {
+        /**
+         * @type SimpleXMLElement $row
+         */
         $row['lft'] = $idx;
         if ($row->count()) {
-            foreach ($row->children() as $descendant) {
+            $children = $row->children();
+            foreach ($children as $descendant) {
                 $idx = $this->addNesting($descendant, ++$idx);
             }
         }
@@ -72,7 +76,7 @@ class AssetList extends AbstractCorpSection
     {
         // Replace empty values with any existing defaults.
         foreach ($this->columnDefaults as $key => $value) {
-            if (is_null($value) || strlen($row[$key]) != 0) {
+            if (null === $value || '' !== (string)$row[$key]) {
                 $this->columns[] = (string)$row[$key];
                 continue;
             }
@@ -120,10 +124,9 @@ class AssetList extends AbstractCorpSection
         $this->getPdo()
              ->exec($sql);
         $simple = new SimpleXMLElement($xml);
-        if (!empty($simple->result)) {
-            $row = $simple->result->row[0];
-            $row['itemID'] = $ownerID;
-            $this->addNesting($simple->result->row[0]);
+        if (0 !== $simple->result[0]->count()) {
+            $simple->result[0]->row[0]['itemID'] = $ownerID;
+            $this->addNesting($simple->result[0]->row[0]);
             $this->flush(
                 $this->columns,
                 array_keys($this->columnDefaults),

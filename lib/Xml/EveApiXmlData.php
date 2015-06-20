@@ -8,7 +8,7 @@
  * This file is part of Yet Another Php Eve Api Library also know as Yapeal
  * which can be used to access the Eve Online API data and place it into a
  * database.
- * Copyright (C) 2014 Michael Cummings
+ * Copyright (C) 2014-2015 Michael Cummings
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -27,7 +27,7 @@
  * You should be able to find a copy of this license in the LICENSE.md file. A
  * copy of the GNU GPL should also be available in the GNU-GPL.md file.
  *
- * @copyright 2014 Michael Cummings
+ * @copyright 2014-2015 Michael Cummings
  * @license   http://www.gnu.org/copyleft/lesser.html GNU LGPL
  * @author    Michael Cummings <mgcummings@yahoo.com>
  */
@@ -104,7 +104,7 @@ class EveApiXmlData implements EveApiReadWriteInterface
      */
     public function getEveApiArguments()
     {
-        if (empty($this->eveApiArguments)) {
+        if (null === $this->eveApiArguments) {
             return [];
         }
         return $this->eveApiArguments;
@@ -115,7 +115,7 @@ class EveApiXmlData implements EveApiReadWriteInterface
      */
     public function getEveApiName()
     {
-        if (empty($this->eveApiName)) {
+        if (null === $this->eveApiName) {
             $mess = 'Tried to access Eve Api name before it was set';
             throw new LogicException($mess);
         }
@@ -127,7 +127,7 @@ class EveApiXmlData implements EveApiReadWriteInterface
      */
     public function getEveApiSectionName()
     {
-        if (empty($this->eveApiSectionName)) {
+        if (null === $this->eveApiSectionName) {
             $mess = 'Tried to access Eve Api section name before it was set';
             throw new LogicException($mess);
         }
@@ -178,7 +178,7 @@ class EveApiXmlData implements EveApiReadWriteInterface
     public function setEveApiArguments(array $values)
     {
         $this->eveApiArguments = [];
-        if (empty($values)) {
+        if (0 === count($values)) {
             return $this;
         }
         foreach ($values as $name => $value) {

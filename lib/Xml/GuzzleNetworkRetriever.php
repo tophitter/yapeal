@@ -8,7 +8,7 @@
  * This file is part of Yet Another Php Eve Api Library also know as Yapeal
  * which can be used to access the Eve Online API data and place it into a
  * database.
- * Copyright (C) 2014 Michael Cummings
+ * Copyright (C) 2014-2015 Michael Cummings
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -27,7 +27,7 @@
  * You should be able to find a copy of this license in the LICENSE.md file. A
  * copy of the GNU GPL should also be available in the GNU-GPL.md file.
  *
- * @copyright 2014 Michael Cummings
+ * @copyright 2014-2015 Michael Cummings
  * @license   http://www.gnu.org/copyleft/lesser.html GNU LGPL
  * @author    Michael Cummings <mgcummings@yahoo.com>
  */
@@ -44,7 +44,8 @@ use Psr\Log\LoggerInterface;
  *
  * @author Stephen Gulick <stephenmg12@gmail.com>
  */
-class GuzzleNetworkRetriever implements EveApiRetrieverInterface,
+class GuzzleNetworkRetriever implements
+    EveApiRetrieverInterface,
     LoggerAwareInterface
 {
     /**
@@ -68,6 +69,7 @@ class GuzzleNetworkRetriever implements EveApiRetrieverInterface,
      * @param EveApiReadWriteInterface $data
      *
      * @return self
+     * @throws \LogicException
      */
     public function retrieveEveApi(EveApiReadWriteInterface &$data)
     {
@@ -123,7 +125,7 @@ class GuzzleNetworkRetriever implements EveApiRetrieverInterface,
         if ($xml === false) {
             return $xml;
         }
-        if (isset($arguments['vCode'])) {
+        if (array_key_exists('vCode', $arguments)) {
             $arguments['vCode'] = substr($arguments['vCode'], 0, 8) . '...';
         }
         $json = json_encode($arguments);
@@ -155,8 +157,9 @@ class GuzzleNetworkRetriever implements EveApiRetrieverInterface,
      * @param EveApiReadInterface $data
      *
      * @return \Guzzle\Http\Message\EntityEnclosingRequestInterface
+     * @throws \LogicException
      */
-    protected function prepareConnection(EveApiReadInterface $data)
+    protected function prepareConnection(EveApiReadInterface &$data)
     {
         $uri = [
             '/{EveApiSectionName}/{EveApiName}.xml.aspx',

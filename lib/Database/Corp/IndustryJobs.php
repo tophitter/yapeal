@@ -8,7 +8,7 @@
  * This file is part of Yet Another Php Eve Api Library also know as Yapeal
  * which can be used to access the Eve Online API data and place it into a
  * database.
- * Copyright (C) 2014 Michael Cummings
+ * Copyright (C) 2014-2015 Michael Cummings
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -27,7 +27,7 @@
  * You should be able to find a copy of this license in the LICENSE.md file. A
  * copy of the GNU GPL should also be available in the GNU-GPL.md file.
  *
- * @copyright 2014 Michael Cummings
+ * @copyright 2014-2015 Michael Cummings
  * @license   http://www.gnu.org/copyleft/lesser.html GNU LGPL
  * @author    Michael Cummings <mgcummings@yahoo.com>
  */
@@ -83,38 +83,37 @@ class IndustryJobs extends AbstractCorpSection
     protected function preserverToIndustryJobs(
         $xml,
         $ownerID
-    )
-    {
+    ) {
         $columnDefaults = [
-            'activityID' => null,
-            'blueprintID' => null,
-            'blueprintLocationID' => null,
-            'blueprintTypeID' => null,
-            'blueprintTypeName' => null,
+            'activityID'           => null,
+            'blueprintID'          => null,
+            'blueprintLocationID'  => null,
+            'blueprintTypeID'      => null,
+            'blueprintTypeName'    => null,
             'completedCharacterID' => 0,
-            'completedDate' => '1970-01-01 00:00:01',
-            'cost' => null,
-            'endDate' => '1970-01-01 00:00:01',
-            'facilityID' => null,
-            'installerID' => null,
-            'installerName' => null,
-            'jobID' => null,
-            'licensedRuns' => 0,
-            'outputLocationID' => null,
-            'ownerID' => $ownerID,
-            'pauseDate' => '1970-01-01 00:00:01',
-            'probability' => null,
-            'productTypeID' => null,
-            'productTypeName' => null,
-            'runs' => 0,
-            'solarSystemID' => null,
-            'solarSystemName' => null,
-            'startDate' => null,
-            'stationID' => null,
-            'status' => null,
-            'successfulRuns' => null,
-            'teamID' => null,
-            'timeInSeconds' => null
+            'completedDate'        => '1970-01-01 00:00:01',
+            'cost'                 => null,
+            'endDate'              => '1970-01-01 00:00:01',
+            'facilityID'           => null,
+            'installerID'          => null,
+            'installerName'        => null,
+            'jobID'                => null,
+            'licensedRuns'         => 0,
+            'outputLocationID'     => null,
+            'ownerID'              => $ownerID,
+            'pauseDate'            => '1970-01-01 00:00:01',
+            'probability'          => null,
+            'productTypeID'        => null,
+            'productTypeName'      => null,
+            'runs'                 => 0,
+            'solarSystemID'        => null,
+            'solarSystemName'      => null,
+            'startDate'            => null,
+            'stationID'            => null,
+            'status'               => null,
+            'successfulRuns'       => null,
+            'teamID'               => null,
+            'timeInSeconds'        => null
         ];
         $this->attributePreserveData(
             $xml,

@@ -8,7 +8,7 @@
  * This file is part of Yet Another Php Eve Api Library also know as Yapeal
  * which can be used to access the Eve Online API data and place it into a
  * database.
- * Copyright (C) 2014 Michael Cummings
+ * Copyright (C) 2014-2015 Michael Cummings
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -27,7 +27,7 @@
  * You should be able to find a copy of this license in the LICENSE.md file. A
  * copy of the GNU GPL should also be available in the GNU-GPL.md file.
  *
- * @copyright 2014 Michael Cummings
+ * @copyright 2014-2015 Michael Cummings
  * @license   http://www.gnu.org/copyleft/lesser.html GNU LGPL
  * @author    Michael Cummings <mgcummings@yahoo.com>
  */
@@ -35,6 +35,7 @@ namespace Yapeal\Xml;
 
 use DomainException;
 use FilePathNormalizer\FilePathNormalizerTrait;
+use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Yapeal\Exception\YapealPreserverException;
 use Yapeal\Exception\YapealPreserverFileException;
@@ -62,9 +63,9 @@ class FileCachePreserver implements EveApiPreserverInterface
      */
     public function __destruct()
     {
-        if ($this->handle) {
-            @flock($this->handle, LOCK_UN);
-            @fclose($this->handle);
+        if (is_resource($this->handle)) {
+            flock($this->handle, LOCK_UN);
+            fclose($this->handle);
         }
     }
     /**
@@ -75,7 +76,7 @@ class FileCachePreserver implements EveApiPreserverInterface
      * @throws YapealPreserverFileException
      * @return self
      */
-    public function preserveEveApi(EveApiReadInterface $data)
+    public function preserveEveApi(EveApiReadInterface &$data)
     {
         try {
             $cachePath
@@ -100,7 +101,7 @@ class FileCachePreserver implements EveApiPreserverInterface
     /**
      * @param string|null $value
      *
-     * @throws \InvalidArgumentException
+     * @throws InvalidArgumentException
      * @return self
      */
     public function setCachePath($value = null)
@@ -110,7 +111,7 @@ class FileCachePreserver implements EveApiPreserverInterface
         }
         if (!is_string($value)) {
             $mess = 'Cache path MUST be string but given ' . gettype($value);
-            throw new \InvalidArgumentException($mess);
+            throw new InvalidArgumentException($mess);
         }
         $this->cachePath = $value;
         return $this;
@@ -157,7 +158,7 @@ class FileCachePreserver implements EveApiPreserverInterface
      */
     protected function getCachePath()
     {
-        if (empty($this->cachePath)) {
+        if (null === $this->cachePath) {
             $mess = 'Tried to access $cachePath before it was set';
             throw new YapealPreserverPathException($mess);
         }
@@ -208,7 +209,7 @@ class FileCachePreserver implements EveApiPreserverInterface
     {
         $this->handle = fopen($cacheFile, 'cb');
         $tries = 0;
-        //Give a minute to try getting lock.
+        //Give 10 secs to try getting lock.
         $timeout = time() + 10;
         while (!flock($this->getHandle(), LOCK_EX | LOCK_NB)) {
             if (++$tries > 10 || time() > $timeout) {

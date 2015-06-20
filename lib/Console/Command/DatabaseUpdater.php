@@ -8,7 +8,7 @@
  * This file is part of Yet Another Php Eve Api Library also know as Yapeal
  * which can be used to access the Eve Online API data and place it into a
  * database.
- * Copyright (C) 2014 Michael Cummings
+ * Copyright (C) 2014-2015 Michael Cummings
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -27,14 +27,13 @@
  * You should be able to find a copy of this license in the LICENSE.md file. A
  * copy of the GNU GPL should also be available in the GNU-GPL.md file.
  *
- * @copyright 2014 Michael Cummings
+ * @copyright 2014-2015 Michael Cummings
  * @license   http://www.gnu.org/copyleft/lesser.html GNU LGPL
  * @author    Michael Cummings <mgcummings@yahoo.com>
  */
 namespace Yapeal\Console\Command;
 
 use DirectoryIterator;
-use DomainException;
 use InvalidArgumentException;
 use LogicException;
 use PDO;
@@ -67,19 +66,25 @@ class DatabaseUpdater extends AbstractDatabaseCommon
     }
     /**
      * @param OutputInterface $output
+     *
+     * @return int
+     * @throws \InvalidArgumentException
+     * @throws \Yapeal\Exception\YapealConsoleException
+     * @throws \Yapeal\Exception\YapealDatabaseException
      */
     protected function addDatabaseProcedure(OutputInterface $output)
     {
         $name = 'DatabaseUpdater::addDatabaseProcedure';
         $output->writeln($name);
-        $csq = $this->getCsq($output);
-        $this->executeSqlStatements(
+        $csq = $this->getCsq();
+        $result = $this->executeSqlStatements(
             $csq->getDropAddOrModifyColumnProcedure()
             . PHP_EOL . $csq->getCreateAddOrModifyColumnProcedure(),
             $name,
             $output
         );
         $output->writeln('');
+        return $result;
     }
     /**
      * Configures the current command.
@@ -110,30 +115,39 @@ HELP;
     }
     /**
      * @param OutputInterface $output
+     *
+     * @return int
+     * @throws \InvalidArgumentException
+     * @throws \Yapeal\Exception\YapealConsoleException
+     * @throws \Yapeal\Exception\YapealDatabaseException
      */
     protected function dropDatabaseProcedure(OutputInterface $output)
     {
         $name = 'DatabaseUpdater::dropDatabaseProcedure';
         $output->writeln($name);
-        $this->executeSqlStatements(
-            $this->getCsq($output)
+        $result = $this->executeSqlStatements(
+            $this->getCsq()
                  ->getDropAddOrModifyColumnProcedure(),
             $name,
             $output
         );
         $output->writeln('');
+        return $result;
     }
     /**
      * @param OutputInterface $output
      *
      * @return string
+     * @throws \InvalidArgumentException
+     * @throws \Yapeal\Exception\YapealConsoleException
+     * @throws \Yapeal\Exception\YapealDatabaseException
      */
     protected function getLatestDatabaseVersion(OutputInterface $output)
     {
-        $sql = $this->getCsq($output)
+        $sql = $this->getCsq()
                     ->getUtilLatestDatabaseVersion();
         try {
-            $result = $this->getPdo($output)
+            $result = $this->getPdo()
                            ->query($sql, PDO::FETCH_NUM);
             $version = $result->fetchColumn();
             $result->closeCursor();
@@ -148,17 +162,17 @@ HELP;
     /**
      * @param OutputInterface $output
      *
-     * @throws InvalidArgumentException
-     * @throws DomainException
-     * @return string[]
+     * @return \string[]
+     * @throws \InvalidArgumentException
+     * @throws \Yapeal\Exception\YapealConsoleException
      */
     protected function getUpdateFileList(OutputInterface $output)
     {
         $fileNames = [];
-        $path = $this->getDic($output)['Yapeal.baseDir'] . 'bin/sql/updates/';
+        $path = $this->getDic()['Yapeal.baseDir'] . 'lib/Sql/updates/';
         if (!is_readable($path)) {
             $mess = sprintf(
-                '<info>Could NOT access update directory %1$s</info>',
+                '<info>Could NOT access Sql update directory %1$s</info>',
                 $path
             );
             $output->writeln($mess);
@@ -168,7 +182,7 @@ HELP;
             if ($fileInfo->isDot() || $fileInfo->isDir()) {
                 continue;
             };
-            if ($fileInfo->getExtension() != 'sql') {
+            if ($fileInfo->getExtension() !== 'sql') {
                 continue;
             }
             $fileNames[] = $this->getFpn()
@@ -179,10 +193,18 @@ HELP;
     }
     /**
      * @param OutputInterface $output
+     *
+     * @return int
+     * @throws \InvalidArgumentException
+     * @throws \Yapeal\Exception\YapealConsoleException
+     * @throws \Yapeal\Exception\YapealDatabaseException
      */
     protected function processSql(OutputInterface $output)
     {
-        $this->addDatabaseProcedure($output);
+        $result = $this->addDatabaseProcedure($output);
+        if (0 !== $result) {
+            return $result;
+        }
         foreach ($this->getUpdateFileList($output) as $fileName) {
             $latestVersion = $this->getLatestDatabaseVersion($output);
             if (!is_file($fileName)) {
@@ -213,27 +235,35 @@ HELP;
                 continue;
             }
             $output->writeln($fileName);
-            $this->executeSqlStatements($sqlStatements, $fileName, $output);
-            $this->updateDatabaseVersion($updateVersion, $output);
+            $result = $this->executeSqlStatements($sqlStatements, $fileName, $output);
+            if (0 !== $result) {
+                return $result;
+            }
+            $result = $this->updateDatabaseVersion($updateVersion, $output);
+            if (0 !== $result) {
+                return $result;
+            }
             $output->writeln('');
         }
-        $this->dropDatabaseProcedure($output);
+        return $this->dropDatabaseProcedure($output);
     }
     /**
      * @param string          $updateVersion
      * @param OutputInterface $output
      *
-     * @return self
+     * @return int
+     * @throws \InvalidArgumentException
+     * @throws \Yapeal\Exception\YapealConsoleException
+     * @throws \Yapeal\Exception\YapealDatabaseException
      */
     protected function updateDatabaseVersion(
         $updateVersion,
         OutputInterface $output
-    )
-    {
-        $sql = $this->getCsq($output)
+    ) {
+        $sql = $this->getCsq()
                     ->getUtilLatestDatabaseVersionUpdate();
         try {
-            $pdo = $this->getPdo($output);
+            $pdo = $this->getPdo();
             $pdo->beginTransaction();
             $stmt = $pdo->prepare($sql);
             $stmt->execute([$updateVersion]);
@@ -244,10 +274,12 @@ HELP;
                 $updateVersion
             );
             $output->writeln([$sql, $mess]);
-            $this->getPdo($output)
-                 ->rollBack();
-            exit(2);
+            if ($this->getPdo()->inTransaction()) {
+                $this->getPdo()
+                     ->rollBack();
+            }
+            return 2;
         }
-        return $this;
+        return 0;
     }
 }

@@ -8,7 +8,7 @@
  * This file is part of Yet Another Php Eve Api Library also know as Yapeal
  * which can be used to access the Eve Online API data and place it into a
  * database.
- * Copyright (C) 2014 Michael Cummings
+ * Copyright (C) 2014-2015 Michael Cummings
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -27,7 +27,7 @@
  * You should be able to find a copy of this license in the LICENSE.md file. A
  * copy of the GNU GPL should also be available in the GNU-GPL.md file.
  *
- * @copyright 2014 Michael Cummings
+ * @copyright 2014-2015 Michael Cummings
  * @license   http://www.gnu.org/copyleft/lesser.html GNU LGPL
  * @author    Michael Cummings <mgcummings@yahoo.com>
  * @author    Stephen Gulick <stephenmg12@gmail.com>
@@ -59,8 +59,7 @@ abstract class AbstractAccountKey extends AbstractCommonEveApi
         EveApiRetrieverInterface $retrievers,
         EveApiPreserverInterface $preservers,
         $interval
-    )
-    {
+    ) {
         $this->getLogger()
              ->debug(
                  sprintf(
@@ -69,14 +68,14 @@ abstract class AbstractAccountKey extends AbstractCommonEveApi
                      $this->getApiName()
                  )
              );
-        if ($this->getSectionName() == 'Char') {
+        if ('Char' === $this->getSectionName()) {
             $active = $this->getActiveCharacters();
             $ownerID = 'characterID';
         } else {
             $active = $this->getActiveCorporations();
             $ownerID = 'corporationID';
         }
-        if (empty($active)) {
+        if (0 === count($active)) {
             $mess = sprintf(
                 'No active registered keys found for %1$s/%2$s',
                 $this->getSectionName(),
@@ -110,7 +109,7 @@ abstract class AbstractAccountKey extends AbstractCommonEveApi
                 )
                 ) {
                     // Special handling for optional faction warfare account.
-                    if ($accountKey == '10000') {
+                    if ('10000' === $accountKey) {
                         continue 1;
                     }
                     continue 2;
@@ -137,23 +136,19 @@ abstract class AbstractAccountKey extends AbstractCommonEveApi
         EveApiRetrieverInterface $retrievers,
         EveApiPreserverInterface $preservers,
         &$interval
-    )
-    {
+    ) {
         if (!$this->gotApiLock($data)) {
             return false;
         }
-        if ($this->getSectionName() == 'Char') {
+        if ('Char' === $this->getSectionName()) {
             $ownerID = $data->getEveApiArgument('characterID');
         } else {
             $ownerID = $data->getEveApiArgument('corporationID');
         }
         $accountKey = $data->getEveApiArgument('accountKey');
-        /**
-         * @type EveApiReadWriteInterface $data
-         */
         $retrievers->retrieveEveApi($data);
         if ($data->getEveApiXml() === false) {
-            if ($accountKey == '10000') {
+            if ('10000' === $accountKey) {
                 $mess = sprintf(
                     'Corporation %1$s does NOT have a faction warfare account %2$s',
                     $ownerID,
@@ -250,7 +245,7 @@ abstract class AbstractAccountKey extends AbstractCommonEveApi
      */
     protected function getKeyList()
     {
-        return $this->keyList;
+        return self::$keyList;
     }
     /**
      * @throws LogicException
@@ -258,7 +253,7 @@ abstract class AbstractAccountKey extends AbstractCommonEveApi
      */
     protected function getMask()
     {
-        if (is_null($this->mask)) {
+        if (null === $this->mask) {
             $mess = 'Tried to use mask when it was NOT set';
             throw new LogicException($mess);
         }
@@ -300,7 +295,16 @@ abstract class AbstractAccountKey extends AbstractCommonEveApi
     /**
      * @type string[] $keyList
      */
-    protected $keyList;
+    static protected $keyList = [
+        '10000',
+        '1000',
+        '1001',
+        '1002',
+        '1003',
+        '1004',
+        '1005',
+        '1006'
+    ];
     /**
      * @type int $mask
      */

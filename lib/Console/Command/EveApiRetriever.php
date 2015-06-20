@@ -8,7 +8,7 @@
  * This file is part of Yet Another Php Eve Api Library also know as Yapeal
  * which can be used to access the Eve Online API data and place it into a
  * database.
- * Copyright (C) 2014 Michael Cummings
+ * Copyright (C) 2014-2015 Michael Cummings
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -27,7 +27,7 @@
  * You should be able to find a copy of this license in the LICENSE.md file. A
  * copy of the GNU GPL should also be available in the GNU-GPL.md file.
  *
- * @copyright 2014 Michael Cummings
+ * @copyright 2014-2015 Michael Cummings
  * @license   http://www.gnu.org/copyleft/lesser.html GNU LGPL
  * @author    Michael Cummings <mgcummings@yahoo.com>
  */
@@ -148,25 +148,20 @@ EOF;
         $this->setHelp($help);
     }
     /**
-     * Executes the current command.
-     *
-     * This method is not abstract because you can use this class
-     * as a concrete class. In this case, instead of defining the
-     * execute() method, you set the code to execute by passing
-     * a Closure to the setCode() method.
-     *
-     * @param InputInterface  $input  An InputInterface instance
-     * @param OutputInterface $output An OutputInterface instance
-     *
-     * @return null|integer null or 0 if everything went fine, or an error code
+     * @inheritdoc
      *
      * @throws \LogicException
+     * @throws \Yapeal\Exception\YapealConsoleException
+     * @throws \Yapeal\Exception\YapealDatabaseException
      * @see    setCode()
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $posts = $input->getArgument('post');
-        if (!empty($posts)) {
+        /**
+         * @type array $posts
+         */
+        $posts = (array)$input->getArgument('post');
+        if (0 === count($posts)) {
             $arguments = [];
             foreach ($posts as $post) {
                 list($key, $value) = explode('=', $post);
@@ -174,16 +169,23 @@ EOF;
             }
             $posts = $arguments;
         }
-        $this->wire($this->getDic($output));
+        $dic = $this->getDic();
+        $this->wire($dic);
         $data = $this->getXmlData(
             $input->getArgument('api_name'),
             $input->getArgument('section_name'),
             $posts
         );
-        $retriever = $this->getDic($output)['Yapeal.Xml.Retriever'];
+        /**
+         * @type \Yapeal\Xml\EveApiRetrieverInterface $retriever
+         */
+        $retriever = $dic['Yapeal.Xml.Retriever'];
         $retriever->retrieveEveApi($data);
         if (false !== $data->getEveApiXml()) {
-            $preserver = $this->getDic($output)['Yapeal.Xml.Preserver'];
+            /**
+             * @type \Yapeal\Xml\EveApiPreserverInterface $preserver
+             */
+            $preserver = $dic['Yapeal.Xml.Preserver'];
             $preserver->preserveEveApi($data);
         }
     }

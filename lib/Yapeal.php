@@ -8,7 +8,7 @@
  * This file is part of Yet Another Php Eve Api Library also know as Yapeal
  * which can be used to access the Eve Online API data and place it into a
  * database.
- * Copyright (C) 2014 Michael Cummings
+ * Copyright (C) 2014-2015 Michael Cummings
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -27,7 +27,7 @@
  * You should be able to find a copy of this license in the LICENSE.md file. A
  * copy of the GNU GPL should also be available in the GNU-GPL.md file.
  *
- * @copyright 2014 Michael Cummings
+ * @copyright 2014-2015 Michael Cummings
  * @license   http://www.gnu.org/copyleft/lesser.html GNU LGPL
  * @author    Michael Cummings <mgcummings@yahoo.com>
  */
@@ -44,10 +44,8 @@ use Yapeal\Configuration\Wiring;
 use Yapeal\Container\ContainerInterface;
 use Yapeal\Container\WiringInterface;
 use Yapeal\Database\AbstractCommonEveApi;
-use Yapeal\Database\Account\APIKeyInfo;
-use Yapeal\Database\CommonSqlQueries;
 use Yapeal\Exception\YapealDatabaseException;
-use Yapeal\Xml\EveApiXmlData;
+use Yapeal\Sql\CommonSqlQueries;
 
 /**
  * Class Yapeal
@@ -68,6 +66,7 @@ class Yapeal implements WiringInterface
      *
      * @return int Returns 0 if everything was fine else something >= 1 for any
      * errors.
+     * @throws \LogicException
      */
     public function autoMagic()
     {
@@ -98,20 +97,15 @@ class Yapeal implements WiringInterface
             $logger->error($mess, ['exception' => $exc]);
             return 1;
         }
-        $yed = $dic['Yapeal.Event.Dispatcher'];
-        $data = new EveApiXmlData();
         // Always check APIKeyInfo.
-        $class = new APIKeyInfo($pdo, $logger, $csq, $yed);
-        $class->autoMagic(
-            $data,
-            $dic['Yapeal.Xml.Retriever'],
-            $dic['Yapeal.Xml.Preserver'],
-            300
+        array_unshift(
+            $result,
+            [
+                'sectionName' => 'account',
+                'apiName'     => 'APIKeyInfo',
+                'interval'    => '300'
+            ]
         );
-        if (empty($result)) {
-            $logger->warning('Exiting no active Eve APIs found');
-            return 1;
-        }
         foreach ($result as $record) {
             $className = sprintf(
                 'Yapeal\\Database\\%1$s\\%2$s',
@@ -127,7 +121,7 @@ class Yapeal implements WiringInterface
              */
             $class = new $className($pdo, $logger, $csq, $yed);
             $class->autoMagic(
-                $data,
+                $dic['Yapeal.XmlData'],
                 $dic['Yapeal.Xml.Retriever'],
                 $dic['Yapeal.Xml.Preserver'],
                 (int)$record['interval']
@@ -178,8 +172,9 @@ class Yapeal implements WiringInterface
                ->wireDatabase()
                ->wireCommonSqlQueries()
                ->wireRetriever()
-            ->wirePreserver()
-            ->wireEvents();
+               ->wirePreserver()
+               ->wireXmlData()
+               ->wireEvents();
     }
     /**
      * @return array

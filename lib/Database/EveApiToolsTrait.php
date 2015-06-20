@@ -8,7 +8,7 @@
  * This file is part of Yet Another Php Eve Api Library also know as Yapeal
  * which can be used to access the Eve Online API data and place it into a
  * database.
- * Copyright (C) 2014 Michael Cummings
+ * Copyright (C) 2014-2015 Michael Cummings
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -27,7 +27,7 @@
  * You should be able to find a copy of this license in the LICENSE.md file. A
  * copy of the GNU GPL should also be available in the GNU-GPL.md file.
  *
- * @copyright 2014 Michael Cummings
+ * @copyright 2014-2015 Michael Cummings
  * @license   http://www.gnu.org/copyleft/lesser.html GNU LGPL
  * @author    Michael Cummings <mgcummings@yahoo.com>
  */
@@ -35,6 +35,7 @@ namespace Yapeal\Database;
 
 use LogicException;
 use PDO;
+use Yapeal\Sql\CommonSqlQueries;
 use Psr\Log\LoggerInterface;
 use Yapeal\Event\YapealEventDispatcherInterface;
 
@@ -87,9 +88,8 @@ trait EveApiToolsTrait
         array $columnNames,
         $tableName,
         $rowCount = 1
-    )
-    {
-        if (empty($columns)) {
+    ) {
+        if (0 === count($columns)) {
             return $this;
         }
         $mess = sprintf(
@@ -129,7 +129,7 @@ trait EveApiToolsTrait
      */
     protected function getCsq()
     {
-        if (empty($this->csq)) {
+        if (null === $this->csq) {
             $mess = 'Tried to use csq before it was set';
             throw new LogicException($mess);
         }
@@ -137,11 +137,11 @@ trait EveApiToolsTrait
     }
     /**
      * @throws LogicException
-     * @return LoggerInterface
+     * @return \Psr\Log\LoggerInterface
      */
     protected function getLogger()
     {
-        if (empty($this->logger)) {
+        if (null === $this->logger) {
             $mess = 'Tried to use logger before it was set';
             throw new LogicException($mess);
         }
@@ -153,7 +153,7 @@ trait EveApiToolsTrait
      */
     protected function getPdo()
     {
-        if (empty($this->pdo)) {
+        if (null === $this->pdo) {
             $mess = 'Tried to use pdo before it was set';
             throw new LogicException($mess);
         }
@@ -165,7 +165,7 @@ trait EveApiToolsTrait
      */
     protected function getYed()
     {
-        if (empty($this->yed)) {
+        if (null ===  $this->yed) {
             $mess = 'Tried to use yed before it was set';
             throw new LogicException($mess);
         }

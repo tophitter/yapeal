@@ -8,7 +8,7 @@
  * This file is part of Yet Another Php Eve Api Library also know as Yapeal
  * which can be used to access the Eve Online API data and place it into a
  * database.
- * Copyright (C) 2014 Michael Cummings
+ * Copyright (C) 2014-2015 Michael Cummings
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -27,7 +27,7 @@
  * You should be able to find a copy of this license in the LICENSE.md file. A
  * copy of the GNU GPL should also be available in the GNU-GPL.md file.
  *
- * @copyright 2014 Michael Cummings
+ * @copyright 2014-2015 Michael Cummings
  * @license   http://www.gnu.org/copyleft/lesser.html GNU LGPL
  * @author    Michael Cummings <mgcummings@yahoo.com>
  */
@@ -83,11 +83,12 @@ class MailBodies extends AbstractCharSection
         new MailMessages(
             $this->getPdo(),
             $this->getLogger(),
-            $this->getCsq(), $this->getYed()
+            $this->getCsq(),
+            $this->getYed()
         )
         )->autoMagic($data, $retrievers, $preservers, $interval);
         $active = $this->getActiveCharacters();
-        if (empty($active)) {
+        if (0 === count($active)) {
             $this->getLogger()
                  ->info('No active characters found');
             return;
@@ -105,23 +106,26 @@ class MailBodies extends AbstractCharSection
                 continue;
             }
             $mailIDs = $this->getActiveMails($charID);
-            if (empty($mailIDs)) {
+            if (0 === count($mailIDs)) {
                 $mess = 'No mail messages for ' . $charID;
                 $this->getLogger()
                      ->info($mess);
                 continue;
             }
-            $mailIDs = array_chunk($mailIDs, 1000);
+            /**
+             * @type array $mailGroups
+             */
+            $mailGroups = array_chunk($mailIDs, 1000);
             $untilInterval = $interval;
-            foreach ($mailIDs as $mailGroup) {
-                $mails = [];
+            foreach ($mailGroups as $mailGroup) {
+                $mailIDs = [];
                 foreach ($mailGroup as $mail) {
-                    $mails[] = $mail[0];
+                    $mailIDs[] = $mail[0];
                 }
-                $mess = 'Mails = ' . implode(',', $mails);
+                $mess = 'Mail IDs = ' . implode(',', $mailIDs);
                 $this->getLogger()
                      ->debug($mess);
-                $char['ids'] = implode(',', $mails);
+                $char['ids'] = implode(',', $mailIDs);
                 $data->setEveApiArguments($char)
                      ->setEveApiXml();
                 $untilInterval = $interval;
@@ -139,7 +143,7 @@ class MailBodies extends AbstractCharSection
                 if ($untilInterval > $interval) {
                     $untilInterval = $interval;
                 }
-                if ($untilInterval != $interval) {
+                if ($untilInterval !== $interval) {
                     continue;
                 }
             }
@@ -169,8 +173,8 @@ class MailBodies extends AbstractCharSection
                          ->query($sql);
             return $stmt->fetchAll(PDO::FETCH_NUM);
         } catch (PDOException $exc) {
-            $mess = 'Could NOT get a list of active mail bodies for '
-                    . $ownerID;
+            $mess =
+                'Could NOT get a list of active mail bodies for ' . $ownerID;
             $this->getLogger()
                  ->warning($mess, ['exception' => $exc]);
             return [];
@@ -185,7 +189,7 @@ class MailBodies extends AbstractCharSection
     protected function preserverToMailBodies($xml, $ownerID)
     {
         $rows = (new SimpleXMLIterator($xml))->xpath('//row');
-        if (count($rows) == 0) {
+        if (0 === count($rows)) {
             return $this;
         }
         $columnNames = ['body', 'messageID', 'ownerID'];

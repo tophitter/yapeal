@@ -8,7 +8,7 @@
  * This file is part of Yet Another Php Eve Api Library also know as Yapeal
  * which can be used to access the Eve Online API data and place it into a
  * database.
- * Copyright (C) 2014 Michael Cummings
+ * Copyright (C) 2014-2015 Michael Cummings
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -27,7 +27,7 @@
  * You should be able to find a copy of this license in the LICENSE.md file. A
  * copy of the GNU GPL should also be available in the GNU-GPL.md file.
  *
- * @copyright 2014 Michael Cummings
+ * @copyright 2014-2015 Michael Cummings
  * @license   http://www.gnu.org/copyleft/lesser.html GNU LGPL
  * @author    Michael Cummings <mgcummings@yahoo.com>
  */
@@ -41,11 +41,11 @@ use LogicException;
 use PDO;
 use PDOException;
 use Psr\Log\LoggerAwareInterface;
-use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use SimpleXMLElement;
 use tidy;
 use XSLTProcessor;
+use Yapeal\Sql\CommonSqlQueries;
 use Yapeal\Event\EveApiEvent;
 use Yapeal\Event\YapealEventDispatcherInterface;
 use Yapeal\Xml\EveApiPreserverInterface;
@@ -55,10 +55,11 @@ use Yapeal\Xml\EveApiRetrieverInterface;
 /**
  * Class AbstractCommonEveApi
  */
-abstract class AbstractCommonEveApi implements EveApiDatabaseInterface,
+abstract class AbstractCommonEveApi implements
+    EveApiDatabaseInterface,
     LoggerAwareInterface
 {
-    use LoggerAwareTrait, EveApiToolsTrait, FilePathNormalizerTrait;
+    use EveApiToolsTrait, FilePathNormalizerTrait;
     /**
      * @param PDO                            $pdo
      * @param LoggerInterface                $logger
@@ -144,7 +145,7 @@ abstract class AbstractCommonEveApi implements EveApiDatabaseInterface,
         $this->getYed()
              ->dispatchEveApiEvent(EveApiEvent::PRE_RETRIEVE, $data);
         $retrievers->retrieveEveApi($data);
-        if ($data->getEveApiXml() === false) {
+        if (false === $data->getEveApiXml()) {
             $mess = sprintf(
                 'Could NOT retrieve Eve Api data for %1$s/%2$s',
                 strtolower($this->getSectionName()),
@@ -219,7 +220,7 @@ abstract class AbstractCommonEveApi implements EveApiDatabaseInterface,
         $stmt = $this->getPdo()
                      ->query($sql);
         $expires = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        if (empty($expires)) {
+        if (0 === count($expires)) {
             $this->getLogger()
                  ->debug('No UtilCachedUntil record found');
             return false;
@@ -238,7 +239,7 @@ abstract class AbstractCommonEveApi implements EveApiDatabaseInterface,
      */
     protected function getCwd()
     {
-        if (empty($this->cwd)) {
+        if (null === $this->cwd) {
             $this->cwd = $this->getFpn()
                               ->normalizePath(__DIR__);
         }
@@ -270,12 +271,12 @@ abstract class AbstractCommonEveApi implements EveApiDatabaseInterface,
         return $xslName;
     }
     /**
-     * @param EveApiReadWriteInterface $data
+     * @param EveApiReadInterface $data
      *
      * @throws LogicException
      * @return bool
      */
-    protected function gotApiLock(EveApiReadWriteInterface &$data)
+    protected function gotApiLock(EveApiReadInterface &$data)
     {
         $sql = $this->getCsq()
                     ->getApiLock($data->getHash());
@@ -306,24 +307,23 @@ abstract class AbstractCommonEveApi implements EveApiDatabaseInterface,
     protected function isEveApiXmlError(
         EveApiReadWriteInterface &$data,
         &$interval
-    )
-    {
+    ) {
         if (strpos($data->getEveApiXml(), '<error') === false) {
             return false;
         }
         $simple = new SimpleXMLElement($data->getEveApiXml());
-        if (!isset($simple->error)) {
+        if (!isset($simple->error[0])) {
             return false;
         }
         $this->getYed()
              ->dispatchEveApiEvent(EveApiEvent::PRE_XML_ERROR, $data);
-        $code = (int)$simple->error['code'];
+        $code = (int)$simple->error[0]['code'];
         $mess = sprintf(
             'Eve Error (%3$s): Received from API %1$s/%2$s - %4$s',
             strtolower($this->getSectionName()),
             $this->getApiName(),
             $code,
-            (string)$simple->error
+            (string)$simple->error[0]
         );
         if ($code < 200) {
             if (strpos($mess, 'retry after') !== false) {
@@ -333,14 +333,16 @@ abstract class AbstractCommonEveApi implements EveApiDatabaseInterface,
                  ->warning($mess);
             return true;
         }
-        if ($code < 300) { // API key errors.
+        if ($code < 300) {
+            // API key errors.
             $mess .= ' for keyID: ' . $data->getEveApiArgument('keyID');
             $this->getLogger()
                  ->error($mess);
             $interval = 86400;
             return true;
         }
-        if ($code > 903 && $code < 905) { // Major application or Yapeal error.
+        if ($code > 903 && $code < 905) {
+            // Major application or Yapeal error.
             $this->getLogger()
                  ->alert($mess);
             $interval = 86400;
@@ -352,12 +354,12 @@ abstract class AbstractCommonEveApi implements EveApiDatabaseInterface,
         return true;
     }
     /**
-     * @param EveApiReadWriteInterface $data
+     * @param EveApiReadInterface $data
      *
      * @throws LogicException
      * @return bool
      */
-    protected function isInvalid(EveApiReadWriteInterface &$data)
+    protected function isInvalid(EveApiReadInterface &$data)
     {
         $this->getLogger()
              ->debug('Started XSD validating');
@@ -395,12 +397,12 @@ abstract class AbstractCommonEveApi implements EveApiDatabaseInterface,
         $sql = $this->getCsq()
                     ->getUtilCachedUntilUpsert();
         $pdo = $this->getPdo();
-        if (!isset($simple->currentTime)) {
+        if (!isset($simple->currentTime[0])) {
             return;
         }
         $dateTime = gmdate(
             'Y-m-d H:i:s',
-            strtotime($simple->currentTime . '+00:00') + $interval
+            strtotime($simple->currentTime[0] . '+00:00') + $interval
         );
         $row = [
             $this->getApiName(),
@@ -451,11 +453,11 @@ abstract class AbstractCommonEveApi implements EveApiDatabaseInterface,
         libxml_clear_errors();
         libxml_use_internal_errors($oldErrors);
         $config = [
-            'indent' => true,
+            'indent'        => true,
             'indent-spaces' => 2,
-            'output-xml' => true,
-            'input-xml' => true,
-            'wrap' => '1000'
+            'output-xml'    => true,
+            'input-xml'     => true,
+            'wrap'          => '1000'
         ];
         // Tidy
         $tidy = new tidy();

@@ -8,7 +8,7 @@
  * This file is part of Yet Another Php Eve Api Library also know as Yapeal
  * which can be used to access the Eve Online API data and place it into a
  * database.
- * Copyright (C) 2014 Michael Cummings
+ * Copyright (C) 2014-2015 Michael Cummings
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -27,7 +27,7 @@
  * You should be able to find a copy of this license in the LICENSE.md file. A
  * copy of the GNU GPL should also be available in the GNU-GPL.md file.
  *
- * @copyright 2014 Michael Cummings
+ * @copyright 2014-2015 Michael Cummings
  * @license   http://www.gnu.org/copyleft/lesser.html GNU LGPL
  * @author    Michael Cummings <mgcummings@yahoo.com>
  */
@@ -71,7 +71,7 @@ class CorporationSheet extends AbstractCorpSection
         $corp = $data->getEveApiArguments();
         $corpID = $corp['corporationID'];
         // Can NOT include corporationID or only get public info.
-        if (isset($corp['keyID'])) {
+        if (array_key_exists('keyID', $corp)) {
             unset($corp['corporationID']);
             $data->setEveApiArguments($corp);
         }
@@ -159,23 +159,23 @@ class CorporationSheet extends AbstractCorpSection
     protected function preserverToCorporationSheet($xml, $ownerID)
     {
         $columnDefaults = [
-            'allianceID' => '0',
-            'allianceName' => '',
-            'ceoID' => null,
-            'ceoName' => null,
-            'corporationID' => $ownerID,
+            'allianceID'      => '0',
+            'allianceName'    => '',
+            'ceoID'           => null,
+            'ceoName'         => null,
+            'corporationID'   => $ownerID,
             'corporationName' => null,
-            'description' => null,
-            'factionID' => '0',
-            'factionName' => '',
-            'memberCount' => null,
-            'memberLimit' => '0',
-            'shares' => null,
-            'stationID' => null,
-            'stationName' => null,
-            'taxRate' => null,
-            'ticker' => null,
-            'url' => null
+            'description'     => null,
+            'factionID'       => '0',
+            'factionName'     => '',
+            'memberCount'     => null,
+            'memberLimit'     => '0',
+            'shares'          => null,
+            'stationID'       => null,
+            'stationName'     => null,
+            'taxRate'         => null,
+            'ticker'          => null,
+            'url'             => null
         ];
         $this->valuesPreserveData(
             $xml,
@@ -194,8 +194,8 @@ class CorporationSheet extends AbstractCorpSection
     protected function preserverToDivisions($xml, $ownerID)
     {
         $columnDefaults = [
-            'ownerID' => $ownerID,
-            'accountKey' => null,
+            'ownerID'     => $ownerID,
+            'accountKey'  => null,
             'description' => null
         ];
         $tableName = 'corpDivisions';
@@ -223,14 +223,14 @@ class CorporationSheet extends AbstractCorpSection
     protected function preserverToLogo($xml, $ownerID)
     {
         $columnDefaults = [
-            'ownerID' => $ownerID,
-            'color1' => null,
-            'color2' => null,
-            'color3' => null,
+            'ownerID'   => $ownerID,
+            'color1'    => null,
+            'color2'    => null,
+            'color3'    => null,
             'graphicID' => null,
-            'shape1' => null,
-            'shape2' => null,
-            'shape3' => null
+            'shape1'    => null,
+            'shape2'    => null,
+            'shape3'    => null
         ];
         $tableName = 'corpLogo';
         $sql = $this->getCsq()
@@ -256,8 +256,8 @@ class CorporationSheet extends AbstractCorpSection
     protected function preserverToWalletDivisions($xml, $ownerID)
     {
         $columnDefaults = [
-            'ownerID' => $ownerID,
-            'accountKey' => null,
+            'ownerID'     => $ownerID,
+            'accountKey'  => null,
             'description' => null
         ];
         $tableName = 'corpWalletDivisions';

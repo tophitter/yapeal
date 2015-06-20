@@ -8,7 +8,7 @@
  * This file is part of Yet Another Php Eve Api Library also know as Yapeal
  * which can be used to access the Eve Online API data and place it into a
  * database.
- * Copyright (C) 2014 Michael Cummings
+ * Copyright (C) 2014-2015 Michael Cummings
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -27,14 +27,13 @@
  * You should be able to find a copy of this license in the LICENSE.md file. A
  * copy of the GNU GPL should also be available in the GNU-GPL.md file.
  *
- * @copyright 2014 Michael Cummings
+ * @copyright 2014-2015 Michael Cummings
  * @license   http://www.gnu.org/copyleft/lesser.html GNU LGPL
  * @author    Michael Cummings <mgcummings@yahoo.com>
  */
 namespace Yapeal\Console\Command;
 
 use FilePathNormalizer\FilePathNormalizerTrait;
-use LogicException;
 use PDOException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -86,6 +85,8 @@ abstract class AbstractDatabaseCommon extends Command implements WiringInterface
     }
     /**
      * @param OutputInterface $output
+     *
+     * @return int
      */
     abstract protected function processSql(OutputInterface $output);
     /**
@@ -143,39 +144,33 @@ abstract class AbstractDatabaseCommon extends Command implements WiringInterface
              );
     }
     /**
-     * Executes the current command.
+     * @inheritdoc
      *
-     * This method is not abstract because you can use this class
-     * as a concrete class. In this case, instead of defining the
-     * execute() method, you set the code to execute by passing
-     * a Closure to the setCode() method.
-     *
-     * @param InputInterface  $input  An InputInterface instance
-     * @param OutputInterface $output An OutputInterface instance
-     *
-     * @return null|int     null or 0 if everything went fine, or an error code
-     *
-     * @throws LogicException When this abstract method is not implemented
-     * @see    setCode()
+     * @return int
+     * @throws \Yapeal\Exception\YapealConsoleException
+     * @throws \Yapeal\Exception\YapealDatabaseException
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->processCliOptions($input->getOptions(), $output);
-        $this->wire($this->getDic($output));
-        $this->processSql($output);
-        return;
+        $this->processCliOptions($input->getOptions());
+        $this->wire($this->getDic());
+        return $this->processSql($output);
     }
     /**
      * @param string          $sqlStatements
      * @param string          $fileName
      * @param OutputInterface $output
+     *
+     * @return int
+     * @throws \InvalidArgumentException
+     * @throws \Yapeal\Exception\YapealConsoleException
+     * @throws \Yapeal\Exception\YapealDatabaseException
      */
     protected function executeSqlStatements(
         $sqlStatements,
         $fileName,
         OutputInterface $output
-    )
-    {
+    ) {
         $templates = [
             ';',
             '{database}',
@@ -186,26 +181,31 @@ abstract class AbstractDatabaseCommon extends Command implements WiringInterface
         ];
         $replacements = [
             '',
-            $this->getDic($output)['Yapeal.Database.database'],
-            $this->getDic($output)['Yapeal.Database.engine'],
-            $this->getDic($output)['Yapeal.Database.engine'],
-            $this->getDic($output)['Yapeal.Database.tablePrefix'],
+            $this->getDic()['Yapeal.Database.database'],
+            $this->getDic()['Yapeal.Database.engine'],
+            $this->getDic()['Yapeal.Database.engine'],
+            $this->getDic()['Yapeal.Database.tablePrefix'],
             ';'
         ];
-        $pdo = $this->getPdo($output);
-        // Split up SQL into statements.
-        $sqlStatements = explode(';', $sqlStatements);
-        // Replace {database}, {table_prefix}, ';', and '$$' in statements.
-        $sqlStatements = str_replace($templates, $replacements, $sqlStatements);
-        foreach ($sqlStatements as $statement => $sql) {
+        $pdo = $this->getPdo();
+        // Split up SQL into statements on ';'.
+        // Replace {database}, {table_prefix}, {engine}, ';', and '$$' in statements.
+        /**
+         * @type string[] $statements
+         */
+        $statements = str_replace(
+            $templates,
+            $replacements,
+            explode(';', $sqlStatements)
+        );
+        foreach ($statements as $statement => $sql) {
             $sql = trim($sql);
             // 5 is a 'magic' number that I think is shorter than any legal SQL
             // statement.
-            if (strlen($sql) < 5) {
+            if (5 > strlen($sql)) {
                 continue;
             }
             try {
-                //$output->writeln($sql);
                 $pdo->exec($sql);
             } catch (PDOException $exc) {
                 $mess = sprintf(
@@ -216,22 +216,22 @@ abstract class AbstractDatabaseCommon extends Command implements WiringInterface
                     $exc->getMessage()
                 );
                 $output->writeln([$sql, $mess]);
-                exit(2);
+                return 2;
             }
             $output->write('.');
         }
+        return 0;
     }
     /**
-     * @param array           $options
-     * @param OutputInterface $output
+     * @param array $options
      *
-     * @return self
+     * @return AbstractDatabaseCommon
+     * @throws \Yapeal\Exception\YapealConsoleException
+     *
      */
     protected function processCliOptions(
-        array $options,
-        OutputInterface $output
-    )
-    {
+        array $options
+    ) {
         $base = 'Yapeal.Database.';
         foreach ([
                      'class',
@@ -243,16 +243,14 @@ abstract class AbstractDatabaseCommon extends Command implements WiringInterface
                      'userName'
                  ] as $option) {
             if (!empty($options[$option])) {
-                $this->getDic($output)[$base . $option] = $options[$option];
+                $this->getDic()[$base . $option] = $options[$option];
             }
         }
         if (!empty($options['configFile'])) {
-            $this->getDic($output)['Yapeal.Config.configDir'] = dirname(
-                $options['configFile']
-            );
-            $this->getDic($output)['Yapeal.Config.fileName'] = basename(
-                $options['configFile']
-            );
+            $this->getDic()['Yapeal.Config.configDir']
+                = dirname($options['configFile']);
+            $this->getDic()['Yapeal.Config.fileName']
+                = basename($options['configFile']);
         }
         return $this;
     }

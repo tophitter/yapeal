@@ -8,7 +8,7 @@
  * This file is part of Yet Another Php Eve Api Library also know as Yapeal
  * which can be used to access the Eve Online API data and place it into a
  * database.
- * Copyright (C) 2014 Michael Cummings
+ * Copyright (C) 2014-2015 Michael Cummings
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -27,15 +27,12 @@
  * You should be able to find a copy of this license in the LICENSE.md file. A
  * copy of the GNU GPL should also be available in the GNU-GPL.md file.
  *
- * @copyright 2014 Michael Cummings
+ * @copyright 2014-2015 Michael Cummings
  * @license   http://www.gnu.org/copyleft/lesser.html GNU LGPL
  * @author    Michael Cummings <mgcummings@yahoo.com>
  */
 namespace Yapeal\Database;
 
-use LogicException;
-use Psr\Log\LoggerInterface;
-use SimpleXMLElement;
 use SimpleXMLIterator;
 
 /**
@@ -60,18 +57,18 @@ trait AttributesDatabasePreserverTrait
         $maxRowCount = 1000
     ) {
         $rows = (new SimpleXMLIterator($xml))->xpath($xPath);
-        if (count($rows) == 0) {
+        if (0 === count($rows)) {
             return $this;
         }
         $rowCount = 0;
         $columns = [];
         /**
-         * @type SimpleXMLElement $row
+         * @type \SimpleXMLElement $row
          */
         foreach ($rows as $row) {
             // Replace empty values with any existing defaults.
             foreach ($columnDefaults as $key => $value) {
-                if (is_null($value) || strlen($row[$key]) != 0) {
+                if (null === $value || '' !== (string)$row[$key]) {
                     $columns[] = (string)$row[$key];
                     continue;
                 }
@@ -111,8 +108,8 @@ trait AttributesDatabasePreserverTrait
         $rowCount = 1
     );
     /**
-     * @throws LogicException
-     * @return LoggerInterface
+     * @throws \LogicException
+     * @return \Psr\Log\LoggerInterface
      */
     abstract protected function getLogger();
 }

@@ -8,7 +8,7 @@
  * This file is part of Yet Another Php Eve Api Library also know as Yapeal
  * which can be used to access the Eve Online API data and place it into a
  * database.
- * Copyright (C) 2014 Michael Cummings
+ * Copyright (C) 2014-2015 Michael Cummings
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -27,7 +27,7 @@
  * You should be able to find a copy of this license in the LICENSE.md file. A
  * copy of the GNU GPL should also be available in the GNU-GPL.md file.
  *
- * @copyright 2014 Michael Cummings
+ * @copyright 2014-2015 Michael Cummings
  * @license   http://www.gnu.org/copyleft/lesser.html GNU LGPL
  * @author    Michael Cummings <mgcummings@yahoo.com>
  */
@@ -67,8 +67,7 @@ class DatabaseInitializer extends AbstractDatabaseCommon
     protected function configure()
     {
         $this->addOptions();
-        $help
-            = <<<'HELP'
+        $help = <<<'HELP'
 The <info>%command.full_name%</info> command is used to initialize (create) a new
  database and tables to be used by Yapeal. If you already have a
  config/yapeal.yaml file setup you can use the following:
@@ -92,6 +91,7 @@ HELP;
      * @param OutputInterface $output
      *
      * @return string[]
+     * @throws \Yapeal\Exception\YapealConsoleException
      */
     protected function getCreateFileList(OutputInterface $output)
     {
@@ -108,10 +108,11 @@ HELP;
             'CustomTables'
         ];
         $fileList = [];
-        $path = $this->getDic($output)['Yapeal.baseDir'] . 'bin/sql/';
+        $dic = $this->getDic();
+        $path = $dic['Yapeal.baseDir'] . 'lib/Sql/';
         if (!is_readable($path)) {
             $mess = sprintf(
-                '<info>Could NOT access sql directory %1$s</info>',
+                '<info>Could NOT access Sql directory %1$s</info>',
                 $path
             );
             $output->writeln($mess);
@@ -120,7 +121,7 @@ HELP;
         foreach ($fileNames as $fileName) {
             $file = $path . 'Create' . $fileName . '.sql';
             if (!is_file($file)) {
-                if ($fileName == 'CustomTables') {
+                if ($fileName === 'CustomTables') {
                     continue;
                 }
                 $mess = sprintf(
@@ -132,10 +133,24 @@ HELP;
             }
             $fileList[] = $file;
         }
+        $file = $dic['Yapeal.baseDir'] . 'config/CreateCustomTables.sql';
+        if (is_file($file)) {
+            $fileList[] = $file;
+        }
+        if (array_key_exists('Yapeal.vendorParentDir', $dic)) {
+            $file =
+                $dic['Yapeal.vendorParentDir']
+                . 'config/CreateCustomTables.sql';
+            if (is_file($file)) {
+                $fileList[] = $file;
+            }
+        }
         return $fileList;
     }
     /**
      * @param OutputInterface $output
+     *
+     * @return int
      */
     protected function processSql(OutputInterface $output)
     {
@@ -150,8 +165,16 @@ HELP;
                 continue;
             }
             $output->writeln($fileName);
-            $this->executeSqlStatements($sqlStatements, $fileName, $output);
+            $result = $this->executeSqlStatements(
+                $sqlStatements,
+                $fileName,
+                $output
+            );
+            if (0 !== $result) {
+                return $result;
+            }
             $output->writeln('');
         }
+        return 0;
     }
 }

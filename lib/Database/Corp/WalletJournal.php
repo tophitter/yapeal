@@ -8,7 +8,7 @@
  * This file is part of Yet Another Php Eve Api Library also know as Yapeal
  * which can be used to access the Eve Online API data and place it into a
  * database.
- * Copyright (C) 2014 Michael Cummings
+ * Copyright (C) 2014-2015 Michael Cummings
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -27,7 +27,7 @@
  * You should be able to find a copy of this license in the LICENSE.md file. A
  * copy of the GNU GPL should also be available in the GNU-GPL.md file.
  *
- * @copyright 2014 Michael Cummings
+ * @copyright 2014-2015 Michael Cummings
  * @license   http://www.gnu.org/copyleft/lesser.html GNU LGPL
  * @author    Michael Cummings <mgcummings@yahoo.com>
  */
@@ -57,24 +57,24 @@ class WalletJournal extends AbstractAccountKey
         $accountKey
     ) {
         $columnDefaults = [
-            'ownerID' => $ownerID,
-            'accountKey' => $accountKey,
-            'date' => null,
-            'refID' => null,
-            'refTypeID' => null,
-            'owner1TypeID' => null,
-            'ownerID1' => null,
-            'ownerName1' => null,
-            'owner2TypeID' => null,
-            'ownerID2' => null,
-            'ownerName2' => null,
-            'argID1' => null,
-            'argName1' => null,
-            'amount' => null,
-            'balance' => null,
-            'reason' => null,
+            'ownerID'       => $ownerID,
+            'accountKey'    => $accountKey,
+            'date'          => null,
+            'refID'         => null,
+            'refTypeID'     => null,
+            'owner1TypeID'  => null,
+            'ownerID1'      => null,
+            'ownerName1'    => null,
+            'owner2TypeID'  => null,
+            'ownerID2'      => null,
+            'ownerName2'    => null,
+            'argID1'        => null,
+            'argName1'      => null,
+            'amount'        => null,
+            'balance'       => null,
+            'reason'        => null,
             'taxReceiverID' => '0',
-            'taxAmount' => '0'
+            'taxAmount'     => '0'
         ];
         $this->attributePreserveData(
             $xml,
@@ -83,20 +83,6 @@ class WalletJournal extends AbstractAccountKey
         );
         return $this;
     }
-    /**
-     * @type string[] $keyList
-     */
-    protected $keyList
-        = [
-            '10000',
-            '1000',
-            '1001',
-            '1002',
-            '1003',
-            '1004',
-            '1005',
-            '1006'
-        ];
     /**
      * @type int $mask
      */

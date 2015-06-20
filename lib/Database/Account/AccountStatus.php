@@ -8,7 +8,7 @@
  * This file is part of Yet Another Php Eve Api Library also know as Yapeal
  * which can be used to access the Eve Online API data and place it into a
  * database.
- * Copyright (C) 2014 Michael Cummings
+ * Copyright (C) 2014-2015 Michael Cummings
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -27,7 +27,7 @@
  * You should be able to find a copy of this license in the LICENSE.md file. A
  * copy of the GNU GPL should also be available in the GNU-GPL.md file.
  *
- * @copyright 2014 Michael Cummings
+ * @copyright 2014-2015 Michael Cummings
  * @license   http://www.gnu.org/copyleft/lesser.html GNU LGPL
  * @author    Michael Cummings <mgcummings@yahoo.com>
  */
@@ -82,7 +82,8 @@ class AccountStatus extends AbstractAccountSection
             $this->getPdo()
                  ->beginTransaction();
             $this->preserveToAccountStatus($xml, $ownerID)
-                 ->preserveToMultiCharacterTraining($xml, $ownerID);
+                 ->preserveToMultiCharacterTraining($xml, $ownerID)
+                 ->preserveToOffers($xml, $ownerID);
             $this->getPdo()
                  ->commit();
         } catch (PDOException $exc) {
@@ -110,11 +111,11 @@ class AccountStatus extends AbstractAccountSection
         $ownerID
     ) {
         $columnDefaults = [
-            'keyID' => $ownerID,
-            'createDate' => null,
-            'logonCount' => null,
+            'keyID'        => $ownerID,
+            'createDate'   => null,
+            'logonCount'   => null,
             'logonMinutes' => null,
-            'paidUntil' => null
+            'paidUntil'    => null
         ];
         $this->valuesPreserveData(
             $xml,
@@ -133,12 +134,12 @@ class AccountStatus extends AbstractAccountSection
     protected function preserveToMultiCharacterTraining($xml, $ownerID)
     {
         $columnDefaults = [
-            'keyID' => $ownerID,
+            'keyID'       => $ownerID,
             'trainingEnd' => null
         ];
         $tableName = 'accountMultiCharacterTraining';
         $sql = $this->getCsq()
-                    ->getDeleteFromTable($tableName);
+                    ->getDeleteFromTableWithKeyID($tableName, $ownerID);
         $this->getLogger()
              ->info($sql);
         $this->getPdo()
@@ -148,6 +149,38 @@ class AccountStatus extends AbstractAccountSection
             $columnDefaults,
             $tableName,
             '//multiCharacterTraining/row'
+        );
+        return $this;
+    }
+    /**
+     * @param string $xml
+     * @param string $ownerID
+     *
+     * @throws LogicException
+     * @return self
+     */
+    protected function preserveToOffers($xml, $ownerID)
+    {
+        $columnDefaults = [
+            'keyID'       => $ownerID,
+            'offerID'     => null,
+            'offeredDate' => null,
+            'from'        => null,
+            'to'          => null,
+            'ISK'         => null
+        ];
+        $tableName = 'accountOffers';
+        $sql = $this->getCsq()
+                    ->getDeleteFromTableWithKeyID($tableName, $ownerID);
+        $this->getLogger()
+             ->info($sql);
+        $this->getPdo()
+             ->exec($sql);
+        $this->attributePreserveData(
+            $xml,
+            $columnDefaults,
+            $tableName,
+            '//Offers/row'
         );
         return $this;
     }
